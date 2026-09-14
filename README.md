@@ -28,10 +28,13 @@ src/
   lib/stats.js           # dernière perf, conseil double progression, moyennes
   lib/storage.js         # localStorage : réglages, cache data, brouillon
   hooks/useSettings.js, useData.js
+  hooks/useRestTimer.js, useSessionTimer.js, useWakeLock.js  # chronos, écran maintenu allumé
   components/
     SessionForm.jsx      # écran Séance du jour
     ExerciseCard.jsx     # un exercice : variante, dernière perf, séries
     Stepper.jsx          # champ numérique gros boutons +/-
+    RestTimer.jsx        # compte à rebours de repos (+30 s / stop, bip à zéro)
+    SessionTimer.jsx     # chrono global de la séance
     PhaseBanner.jsx      # semaine / phase / RIR cible
     ProgressCharts.jsx   # graphiques par exercice
     BodyweightScreen.jsx # poids corporel + moyenne mobile 7j + moyennes hebdo
@@ -52,4 +55,14 @@ src/
 }
 ```
 
+Une séance porte aussi `duration_min` (durée totale) si le chrono de séance a été lancé.
+
 Commits générés : `Séance {date} - Jour {A|B|C}` et `Poids {date} - {kg} kg`.
+
+## Temps de repos
+
+Définis par exercice dans `src/config/program.js` (`rest`, en secondes) : 2:30-3:00
+sur les polyarticulaires lourds (squat/presse, RDL, dips et tractions lestés),
+1:30-2:00 sur rowing/pompes/fentes, 1:00 sur l'isolation. Le bouton « ▶ Repos »
+de chaque exercice lance le compte à rebours ; l'écran reste allumé pendant le
+repos (Screen Wake Lock) et un bip + vibration signalent la fin.

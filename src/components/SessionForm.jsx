@@ -3,8 +3,13 @@ import { DAYS, DAY_KEYS } from '../config/program.js'
 import { cycleInfo, dayForDate, formatDateFR, todayISO } from '../lib/cycle.js'
 import { lastPerformance, sortedSessions } from '../lib/stats.js'
 import { clearDraft, loadDraft, saveDraft } from '../lib/storage.js'
+import { useRestTimer } from '../hooks/useRestTimer.js'
+import { useSessionTimer } from '../hooks/useSessionTimer.js'
+import { useWakeLock } from '../hooks/useWakeLock.js'
 import ExerciseCard from './ExerciseCard.jsx'
 import PhaseBanner from './PhaseBanner.jsx'
+import RestTimer from './RestTimer.jsx'
+import SessionTimer from './SessionTimer.jsx'
 
 /** Construit une séance pré-remplie à partir du programme + dernières perfs. */
 function buildSession(date, day, sessions, rirTarget) {
@@ -43,6 +48,10 @@ export default function SessionForm({ data, settings, onCommit }) {
   const [session, setSession] = useState(null)
   const [saving, setSaving] = useState(false)
   const [notice, setNotice] = useState(null)
+  const rest = useRestTimer()
+  const chrono = useSessionTimer()
+  // Écran maintenu allumé pendant un repos (le téléphone ne se verrouille pas)
+  useWakeLock(rest.running)
 
   const { week, phase, rir } = useMemo(() => cycleInfo(date, settings.cycleStart), [date, settings.cycleStart])
   const sessions = useMemo(() => sortedSessions(data.sessions), [data.sessions])
@@ -73,10 +82,16 @@ export default function SessionForm({ data, settings, onCommit }) {
     setSession(buildSession(date, day, sessions, rir.max))
   }
 
+  const startRest = (seconds, label) => {
+    if (!chrono.started) chrono.start()
+    rest.start(seconds, label)
+  }
+
   const save = async () => {
     setSaving(true)
     setNotice(null)
     const payload = { ...session, date, day, week, phase: phase.key }
+    if (chrono.started) payload.duration_min = Math.max(1, Math.round(chrono.elapsedSec / 60))
     try {
       await onCommit(
         (d) => {
@@ -88,6 +103,8 @@ export default function SessionForm({ data, settings, onCommit }) {
         `Séance ${date} - Jour ${day}`,
       )
       clearDraft()
+      chrono.reset()
+      rest.stop()
       setNotice({ ok: true, msg: `Séance ${formatDateFR(date)} commitée sur GitHub ✓` })
     } catch (e) {
       setNotice({ ok: false, msg: `Échec de la sauvegarde : ${e.message}` })
@@ -115,6 +132,8 @@ export default function SessionForm({ data, settings, onCommit }) {
         </div>
       </div>
 
+      <SessionTimer {...chrono} onStart={chrono.start} onStop={chrono.stop} onReset={chrono.reset} />
+
       {alreadySaved && <div className="notice">Séance déjà enregistrée ce jour — la sauvegarde la remplacera.</div>}
 
       {session.exercises.map((ex, i) => (
@@ -126,12 +145,14 @@ export default function SessionForm({ data, settings, onCommit }) {
           currentDate={date}
           rirTarget={rir.max}
           onChange={(next) => updateExercise(i, next)}
+          onRest={startRest}
         />
       ))}
 
       {notice && <div className={`notice ${notice.ok ? 'ok' : 'error'}`}>{notice.msg}</div>}
 
       <div className="actions sticky">
+        <RestTimer timer={rest.timer} remaining={rest.remaining} finished={rest.finished} onExtend={rest.extend} onStop={rest.stop} />
         <button type="button" className="btn secondary" onClick={reset} disabled={saving}>
           Réinitialiser
         </button>

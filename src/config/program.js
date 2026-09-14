@@ -1,44 +1,47 @@
 // Programme full body 3x/semaine (hypertrophie), 12 semaines.
 // `options` = variantes possibles pour un même créneau ; le nom choisi est celui
 // enregistré dans data.json (la progression est suivie par nom).
+// `rest` = repos conseillé en secondes : 150-180 s sur les polyarticulaires lourds
+// (squat, RDL, dips/tractions lestés), 90-120 s sur les polyarticulaires légers,
+// 60 s sur l'isolation pour tenir la séance dans l'heure.
 
 export const DAYS = {
   A: {
     label: 'Jour A',
     weekday: 1, // lundi
     exercises: [
-      { options: ['Squat', 'Presse à cuisses'], sets: [3, 4], reps: [6, 10], weightStep: 2.5 },
-      { options: ['Dips lestés'], sets: [3, 4], reps: [6, 12], weightStep: 2.5 },
-      { options: ['Tractions pronation'], sets: [3, 4], reps: [6, 12], weightStep: 2.5 },
-      { options: ['Rowing barre', 'Rowing haltère'], sets: [3, 3], reps: [8, 15], weightStep: 2.5 },
-      { options: ['Pompes lestées', 'Pompes déclinées'], sets: [2, 3], reps: [10, 20], weightStep: 2.5 },
-      { options: ['Élévations latérales'], sets: [2, 3], reps: [12, 25], weightStep: 1 },
-      { options: ['Cable crunch'], sets: [2, 3], reps: [10, 20], weightStep: 2.5 },
+      { options: ['Squat', 'Presse à cuisses'], sets: [3, 4], reps: [6, 10], weightStep: 2.5, rest: 180 },
+      { options: ['Dips lestés'], sets: [3, 4], reps: [6, 12], weightStep: 2.5, rest: 150 },
+      { options: ['Tractions pronation'], sets: [3, 4], reps: [6, 12], weightStep: 2.5, rest: 150 },
+      { options: ['Rowing barre', 'Rowing haltère'], sets: [3, 3], reps: [8, 15], weightStep: 2.5, rest: 120 },
+      { options: ['Pompes lestées', 'Pompes déclinées'], sets: [2, 3], reps: [10, 20], weightStep: 2.5, rest: 90 },
+      { options: ['Élévations latérales'], sets: [2, 3], reps: [12, 25], weightStep: 1, rest: 60 },
+      { options: ['Cable crunch'], sets: [2, 3], reps: [10, 20], weightStep: 2.5, rest: 60 },
     ],
   },
   B: {
     label: 'Jour B',
     weekday: 3, // mercredi
     exercises: [
-      { options: ['Soulevé de terre roumain'], sets: [3, 4], reps: [6, 10], weightStep: 2.5 },
-      { options: ['Chin-ups', 'Tractions supination'], sets: [3, 3], reps: [6, 12], weightStep: 2.5 },
-      { options: ['Dips lestés', 'Pompes lestées'], sets: [3, 3], reps: [8, 15], weightStep: 2.5 },
-      { options: ['Fentes', 'Presse unilatérale'], sets: [2, 3], reps: [8, 15], weightStep: 2.5, perSide: true },
-      { options: ['Élévations latérales'], sets: [2, 3], reps: [12, 25], weightStep: 1 },
-      { options: ['Gainage'], sets: [2, 3], reps: [30, 90], weightStep: 2.5, unit: 's' },
+      { options: ['Soulevé de terre roumain'], sets: [3, 4], reps: [6, 10], weightStep: 2.5, rest: 180 },
+      { options: ['Chin-ups', 'Tractions supination'], sets: [3, 3], reps: [6, 12], weightStep: 2.5, rest: 150 },
+      { options: ['Dips lestés', 'Pompes lestées'], sets: [3, 3], reps: [8, 15], weightStep: 2.5, rest: 120 },
+      { options: ['Fentes', 'Presse unilatérale'], sets: [2, 3], reps: [8, 15], weightStep: 2.5, perSide: true, rest: 120 },
+      { options: ['Élévations latérales'], sets: [2, 3], reps: [12, 25], weightStep: 1, rest: 60 },
+      { options: ['Gainage'], sets: [2, 3], reps: [30, 90], weightStep: 2.5, unit: 's', rest: 60 },
     ],
   },
   C: {
     label: 'Jour C',
     weekday: 5, // vendredi
     exercises: [
-      { options: ['Presse à cuisses', 'Squat variante'], sets: [3, 4], reps: [8, 12], weightStep: 2.5 },
-      { options: ['Pompes lestées', 'Pompes déclinées'], sets: [3, 3], reps: [8, 20], weightStep: 2.5 },
-      { options: ['Tractions neutres', 'Rowing'], sets: [3, 3], reps: [8, 15], weightStep: 2.5 },
-      { options: ['Leg curl'], sets: [2, 3], reps: [10, 15], weightStep: 2.5 },
-      { options: ['Mollets'], sets: [3, 3], reps: [10, 20], weightStep: 2.5 },
-      { options: ['Curl biceps'], sets: [2, 3], reps: [8, 15], weightStep: 1 },
-      { options: ['Extension triceps'], sets: [2, 3], reps: [8, 15], weightStep: 1 },
+      { options: ['Presse à cuisses', 'Squat variante'], sets: [3, 4], reps: [8, 12], weightStep: 2.5, rest: 180 },
+      { options: ['Pompes lestées', 'Pompes déclinées'], sets: [3, 3], reps: [8, 20], weightStep: 2.5, rest: 120 },
+      { options: ['Tractions neutres', 'Rowing'], sets: [3, 3], reps: [8, 15], weightStep: 2.5, rest: 150 },
+      { options: ['Leg curl'], sets: [2, 3], reps: [10, 15], weightStep: 2.5, rest: 90 },
+      { options: ['Mollets'], sets: [3, 3], reps: [10, 20], weightStep: 2.5, rest: 60 },
+      { options: ['Curl biceps'], sets: [2, 3], reps: [8, 15], weightStep: 1, rest: 60 },
+      { options: ['Extension triceps'], sets: [2, 3], reps: [8, 15], weightStep: 1, rest: 60 },
     ],
   },
 }

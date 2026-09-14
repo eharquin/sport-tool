@@ -1,12 +1,13 @@
 import Stepper from './Stepper.jsx'
 import { formatDateFR } from '../lib/cycle.js'
 import { formatSets, lastPerformance, progressionHint } from '../lib/stats.js'
+import { fmtClock } from '../lib/time.js'
 
 /**
  * Un exercice de la séance : choix de variante, dernière perf + conseil de
  * progression, et une ligne de steppers par série.
  */
-export default function ExerciseCard({ slot, exercise, sessions, currentDate, rirTarget, onChange }) {
+export default function ExerciseCard({ slot, exercise, sessions, currentDate, rirTarget, onChange, onRest }) {
   const unit = slot.unit ? slot.unit : ''
   const last = lastPerformance(sessions, exercise.name, currentDate)
   const hint = progressionHint(last, slot.reps)
@@ -50,6 +51,7 @@ export default function ExerciseCard({ slot, exercise, sessions, currentDate, ri
           {slot.sets[1] !== slot.sets[0] && `-${slot.sets[1]}`}×{slot.reps[0]}-{slot.reps[1]}
           {unit}
           {slot.perSide && '/côté'}
+          <span className="rest-hint"> · repos {fmtClock(slot.rest)}</span>
         </span>
       </header>
 
@@ -90,6 +92,10 @@ export default function ExerciseCard({ slot, exercise, sessions, currentDate, ri
       </div>
 
       <div className="set-actions">
+        <button type="button" className="btn small rest-btn" onClick={() => onRest(slot.rest, exercise.name)}>
+          ▶ Repos {fmtClock(slot.rest)}
+        </button>
+        <span className="spacer" />
         <button type="button" className="btn small secondary" onClick={removeSet} disabled={exercise.sets.length <= 1}>
           − série
         </button>
