@@ -50,10 +50,18 @@ function buildSession(date, day, location, sessions, phaseRir) {
   return { date, day, location, exercises }
 }
 
-export default function SessionForm({ data, settings, onCommit }) {
-  const [date, setDate] = useState(todayISO)
-  const [day, setDay] = useState(() => dayForDate(todayISO()))
-  const [location, setLocation] = useState(() => loadDraft()?.location ?? 'gym')
+export default function SessionForm({ data, settings, onCommit, edit }) {
+  const [date, setDate] = useState(() => edit?.date ?? todayISO())
+  const [day, setDay] = useState(() => edit?.day ?? dayForDate(todayISO()))
+  const [location, setLocation] = useState(() => edit?.location ?? loadDraft()?.location ?? 'gym')
+
+  // Demande de modification d'une séance passée (depuis l'écran Séances)
+  useEffect(() => {
+    if (!edit) return
+    setDate(edit.date)
+    setDay(edit.day)
+    setLocation(edit.location)
+  }, [edit])
   const [session, setSession] = useState(null)
   const [saving, setSaving] = useState(false)
   const [notice, setNotice] = useState(null)
@@ -97,6 +105,11 @@ export default function SessionForm({ data, settings, onCommit }) {
     if (session && dirty.current) saveDraft(session)
   }, [session])
 
+  const updateNotes = (notes) => {
+    dirty.current = true
+    setSession((s) => ({ ...s, notes }))
+  }
+
   const updateExercise = (i, ex) => {
     dirty.current = true
     setSession((s) => ({ ...s, exercises: s.exercises.map((e, j) => (j === i ? ex : e)) }))
@@ -119,6 +132,8 @@ export default function SessionForm({ data, settings, onCommit }) {
     // `done` (coche de séance en cours) reste dans le brouillon, pas dans data.json
     const exercises = session.exercises.map((ex) => ({ ...ex, sets: ex.sets.map(({ done: _done, ...set }) => set) }))
     const payload = { ...session, exercises, date, day, location, week, phase: phase.key }
+    if (!payload.notes?.trim()) delete payload.notes
+    else payload.notes = payload.notes.trim()
     if (chrono.started) payload.duration_min = Math.max(1, Math.round(chrono.elapsedSec / 60))
     try {
       const { queued } = await onCommit(upsertSession(payload), `Séance ${date} - Jour ${day}${location === 'home' ? ' (maison)' : ''}`)
@@ -196,6 +211,19 @@ export default function SessionForm({ data, settings, onCommit }) {
           onRest={startRest}
         />
       ))}
+
+      <section className="card">
+        <label className="field">
+          <span>Notes de séance (douleur, matériel, ressenti…)</span>
+          <textarea
+            className="notes"
+            rows={2}
+            value={session.notes ?? ''}
+            onChange={(e) => updateNotes(e.target.value)}
+            placeholder="Ex. épaule gauche sensible sur les dips"
+          />
+        </label>
+      </section>
 
       {notice && <div className={`notice ${notice.ok ? 'ok' : 'error'}`}>{notice.msg}</div>}
 

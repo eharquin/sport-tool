@@ -34,7 +34,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
   color: inherit;
 }
@@ -149,7 +150,7 @@ main {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: var(--text-2);
   min-height: 56px;
 }
@@ -279,6 +280,12 @@ main {
   color: var(--text-2);
   white-space: nowrap;
   padding-top: 4px;
+}
+.cue {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  color: var(--text-2);
+  font-style: italic;
 }
 .last-perf {
   font-size: 0.9rem;
@@ -664,6 +671,48 @@ main {
 .btn:disabled {
   opacity: 0.5;
 }
+.btn.danger {
+  background: var(--err);
+  border-color: var(--err);
+  color: #fff;
+}
+.danger-text {
+  color: var(--err) !important;
+}
+
+/* Liste des séances */
+.session-item {
+  padding: 0;
+  overflow: hidden;
+}
+.session-summary {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  background: none;
+  border: none;
+  padding: 12px;
+  text-align: left;
+  min-height: 56px;
+}
+.session-item.open .session-summary {
+  border-bottom: 1px solid var(--border);
+}
+.session-item .table,
+.session-item .actions,
+.session-notes {
+  margin: 8px 10px;
+  width: calc(100% - 20px);
+}
+.session-notes {
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+.session-item .actions {
+  margin-bottom: 12px;
+}
 .btn-link {
   background: none;
   border: none;
@@ -682,6 +731,15 @@ main {
   font-size: 0.8rem;
   color: var(--text-2);
   margin-bottom: 4px;
+}
+.field textarea {
+  width: 100%;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  resize: vertical;
+  min-height: 56px;
 }
 .field input,
 .field select {

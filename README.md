@@ -45,7 +45,8 @@ src/
     RirCalibration.jsx   # biais de RIR mesuré par les séries AMRAP
     MuscleVolume.jsx     # séries dures / muscle / semaine sur 4 semaines
     BodyweightScreen.jsx # poids corporel + moyenne mobile 7j + moyennes hebdo
-    TokenConfig.jsx      # réglages / token
+    SessionList.jsx      # historique des séances : détail, modification, suppression
+    TokenConfig.jsx      # réglages / token / objectif / expiration du token
     Nav.jsx
 ```
 

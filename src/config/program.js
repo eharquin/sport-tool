@@ -133,6 +133,50 @@ export const EXERCISE_MUSCLES = {
   'Extension triceps élastique': { triceps: 1 },
 }
 
+// Consigne technique affichée sous le nom de l'exercice. Accent sur l'amplitude
+// complète et le travail en position étirée (hypertrophie supérieure à volume
+// égal), avec partials en bas de course en fin de série sur les mouvements adaptés.
+export const EXERCISE_CUES = {
+  Squat: 'Profond, pause brève en bas, genoux dans l\'axe des pieds.',
+  'Presse à cuisses': 'Amplitude max sans décoller le bas du dos ; ne verrouille pas en haut.',
+  'Squat variante': 'Profond, pause brève en bas ; partials en bas de course quand tu bloques.',
+  'Squat bulgare lesté (sac à dos)': 'Genou arrière vers le sol, buste un peu penché ; partials bas en fin de série.',
+  'Squat bulgare (variante)': 'Grande amplitude, tempo lent à la descente ; partials bas en fin de série.',
+  'Dips lestés': 'Descends jusqu\'à l\'étirement des pecs (épaule sous le coude), buste penché ; partials bas en fin de série.',
+  'Dips chaise romaine': 'Descends jusqu\'à l\'étirement des pecs, buste penché ; partials bas en fin de série.',
+  'Tractions pronation': 'Bras tendus en bas (étirement complet), poitrine vers la barre ; partials bas si tu bloques.',
+  'Tractions large (chaise romaine)': 'Bras tendus en bas, coudes vers les hanches ; partials bas si tu bloques.',
+  'Tractions neutres': 'Étirement complet en bas, poitrine vers la barre ; contrôle la descente.',
+  'Tractions neutres (chaise romaine)': 'Étirement complet en bas, poitrine vers la barre ; contrôle la descente.',
+  'Chin-ups': 'Bras tendus en bas, menton au-dessus de la barre ; descente lente.',
+  'Tractions supination': 'Bras tendus en bas, menton au-dessus de la barre ; descente lente.',
+  'Tractions supination (chaise romaine)': 'Bras tendus en bas, menton au-dessus de la barre ; descente lente.',
+  'Rowing barre': 'Étire complètement en bas, tire vers le nombril, dos plat ; contrôle la descente.',
+  'Rowing haltère': 'Laisse l\'omoplate s\'étirer en bas, tire vers la hanche ; contrôle la descente.',
+  Rowing: 'Étirement complet en bas, tire vers le nombril ; contrôle la descente.',
+  'Rowing élastique': 'Buste penché, laisse les bras s\'étirer vers l\'ancrage, tire vers le nombril, 1 s en contraction.',
+  'Pompes lestées': 'Poitrine près du sol, coudes ~45°, gainage ; partials bas en fin de série.',
+  'Pompes déclinées': 'Poitrine près du sol, coudes ~45°, gainage ; partials bas en fin de série.',
+  'Élévations latérales': 'Légère inclinaison avant, monte à l\'horizontale, descente contrôlée, pas d\'élan.',
+  'Élévations latérales élastique': 'Élastique sous le pied opposé pour tendre dès le bas ; monte à l\'horizontale, sans élan.',
+  'Cable crunch': 'Enroule la colonne (pas les hanches), étire complètement en haut.',
+  'Relevés de genoux (chaise romaine)': 'Bascule le bassin en haut, descente contrôlée, pas d\'élan.',
+  'Soulevé de terre roumain': 'Hanches en arrière, dos plat, descends jusqu\'à l\'étirement max des ischios, barre le long des jambes.',
+  'RDL unilatéral lesté': 'Hanches en arrière, dos plat, descends jusqu\'à l\'étirement max ; l\'autre main sur un appui pour l\'équilibre.',
+  Fentes: 'Grand pas, genou arrière proche du sol, pousse dans le talon.',
+  'Presse unilatérale': 'Amplitude complète, pousse dans le talon, genou dans l\'axe.',
+  'Fentes bulgares lestées': 'Genou arrière proche du sol, buste un peu penché, pousse dans le talon.',
+  Gainage: 'Bassin rétroversé, fessiers serrés ; augmente la durée ou passe aux variantes (bras tendus, pieds surélevés).',
+  'Leg curl': 'Étire complètement en position tendue, 1 s de pause en contraction, descente lente.',
+  'Leg curl élastique': 'Allongé, élastique ancré bas ; étirement complet, 1 s en contraction, descente lente.',
+  Mollets: 'Descends jusqu\'à l\'étirement complet avec pause 1-2 s en bas ; monte sur la pointe.',
+  'Mollets unilatéraux sur marche (lestés)': 'Talon bas au max avec pause 1-2 s ; monte sur la pointe ; appui léger pour l\'équilibre.',
+  'Curl biceps': 'Coudes tendus en bas (étirement complet), pas d\'élan, descente contrôlée.',
+  'Curl élastique': 'Coudes tendus en bas, épaules fixes, descente contrôlée.',
+  'Extension triceps': 'Version overhead = triceps en position étirée ; coudes fixes, amplitude complète.',
+  'Extension triceps élastique': 'Overhead ou nuque (triceps étiré), coudes fixes, amplitude complète.',
+}
+
 // Séries dures / muscle / semaine : bornes pour le code couleur.
 export const VOLUME_ZONES = { low: 6, target: 10, high: 20 }
 

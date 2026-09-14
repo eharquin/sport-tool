@@ -1,6 +1,7 @@
 const TABS = [
   { key: 'session', label: 'Séance', icon: '🏋️' },
-  { key: 'progress', label: 'Progression', icon: '📈' },
+  { key: 'history', label: 'Séances', icon: '📋' },
+  { key: 'progress', label: 'Progrès', icon: '📈' },
   { key: 'bodyweight', label: 'Poids', icon: '⚖️' },
   { key: 'settings', label: 'Réglages', icon: '⚙️' },
 ]

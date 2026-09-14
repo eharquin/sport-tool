@@ -16,6 +16,7 @@ const DEFAULT_SETTINGS = {
   path: 'data.json',
   cycleStart: '',
   goal: 'bulk', // 'bulk' | 'maintain' | 'cut' — cible de variation du poids corporel
+  tokenExpires: '', // date d'expiration du PAT (saisie manuelle) pour l'alerte
 }
 
 function read(key, fallback) {

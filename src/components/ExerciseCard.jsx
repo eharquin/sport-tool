@@ -4,6 +4,7 @@ import { formatDateFR } from '../lib/cycle.js'
 import { formatSets, lastPerformance, progressionHint } from '../lib/stats.js'
 import { fmtClock } from '../lib/time.js'
 import { bodyweightAt, e1rm, historyWithE1rm, stagnation } from '../lib/analysis.js'
+import { EXERCISE_CUES } from '../config/program.js'
 import { byLocation } from '../lib/stats.js'
 
 /**
@@ -103,6 +104,8 @@ export default function ExerciseCard({ slot, exercise, sessions, bodyweight, cur
           <span className="rest-hint"> · repos {fmtClock(slot.rest)}</span>
         </span>
       </header>
+
+      {EXERCISE_CUES[exercise.name] && <p className="cue">{EXERCISE_CUES[exercise.name]}</p>}
 
       <div className="last-perf">
         {last ? (

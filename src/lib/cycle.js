@@ -50,3 +50,11 @@ export function cycleInfo(iso, cycleStartISO) {
 export function formatDateFR(iso) {
   return parseISO(iso).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
 }
+
+/** Nombre de jours entre aujourd'hui et `iso` (négatif si passé). */
+export function daysUntil(iso) {
+  if (!iso) return null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return Math.round((parseISO(iso) - today) / 86400000)
+}

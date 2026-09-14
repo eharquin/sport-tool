@@ -9,6 +9,14 @@ export function upsertBodyweight(entry) {
   return { type: 'upsertBodyweight', entry }
 }
 
+export function deleteSession(date, day) {
+  return { type: 'deleteSession', date, day }
+}
+
+export function deleteBodyweight(date) {
+  return { type: 'deleteBodyweight', date }
+}
+
 export function applyOp(data, op) {
   switch (op.type) {
     case 'upsertSession': {
@@ -24,6 +32,12 @@ export function applyOp(data, op) {
       data.bodyweight.sort((a, b) => a.date.localeCompare(b.date))
       return data
     }
+    case 'deleteSession':
+      data.sessions = data.sessions.filter((s) => !(s.date === op.date && s.day === op.day))
+      return data
+    case 'deleteBodyweight':
+      data.bodyweight = data.bodyweight.filter((b) => b.date !== op.date)
+      return data
     default:
       return data
   }

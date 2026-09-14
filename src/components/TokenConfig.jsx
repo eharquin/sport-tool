@@ -78,6 +78,10 @@ export default function TokenConfig({ settings, onChange, onSaved }) {
         <button type="button" className="btn-link" onClick={() => setShowToken((s) => !s)}>
           {showToken ? 'Masquer' : 'Afficher'} le token
         </button>
+        <label className="field">
+          <span>Date d'expiration du token (alerte 7 jours avant)</span>
+          <input type="date" value={form.tokenExpires ?? ''} onChange={set('tokenExpires')} />
+        </label>
       </section>
 
       <section className="card">

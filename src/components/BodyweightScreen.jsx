@@ -3,7 +3,7 @@ import { CartesianGrid, ComposedChart, Line, ResponsiveContainer, Scatter, Toolt
 import { formatDateFR, todayISO } from '../lib/cycle.js'
 import { bodyweightSeries, weeklyAverages } from '../lib/stats.js'
 import { bodyweightTrend, WEIGHT_GOALS } from '../lib/analysis.js'
-import { upsertBodyweight } from '../lib/ops.js'
+import { deleteBodyweight, upsertBodyweight } from '../lib/ops.js'
 import Stepper from './Stepper.jsx'
 
 const AXIS = { fontSize: 11, fill: 'var(--text-2)' }
@@ -22,6 +22,22 @@ export default function BodyweightScreen({ data, settings, onCommit }) {
   const [notice, setNotice] = useState(null)
 
   const existing = data.bodyweight.find((b) => b.date === date)
+  const recent = useMemo(() => [...data.bodyweight].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10), [data.bodyweight])
+  const [confirmDate, setConfirmDate] = useState(null)
+
+  const remove = async (d) => {
+    setSaving(true)
+    setNotice(null)
+    try {
+      const { queued } = await onCommit(deleteBodyweight(d), `Suppression poids ${d}`)
+      setConfirmDate(null)
+      setNotice({ ok: true, msg: `Pesée du ${formatDateFR(d)} supprimée${queued ? ' (hors-ligne, en attente)' : ' ✓'}` })
+    } catch (e) {
+      setNotice({ ok: false, msg: `Échec : ${e.message}` })
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const save = async () => {
     setSaving(true)
@@ -101,6 +117,38 @@ export default function BodyweightScreen({ data, settings, onCommit }) {
               <Line type="monotone" dataKey="ma7" stroke="var(--series-1)" strokeWidth={2} dot={false} isAnimationActive={false} />
             </ComposedChart>
           </ResponsiveContainer>
+        </section>
+      )}
+
+      {recent.length > 0 && (
+        <section className="card">
+          <h3>Dernières pesées</h3>
+          <table className="table">
+            <tbody>
+              {recent.map((b) => (
+                <tr key={b.date}>
+                  <td>{formatDateFR(b.date)}</td>
+                  <td className="num">{b.weight_kg} kg</td>
+                  <td className="num">
+                    {confirmDate === b.date ? (
+                      <>
+                        <button type="button" className="btn-link" onClick={() => setConfirmDate(null)} disabled={saving}>
+                          annuler
+                        </button>{' '}
+                        <button type="button" className="btn-link danger-text" onClick={() => remove(b.date)} disabled={saving}>
+                          confirmer
+                        </button>
+                      </>
+                    ) : (
+                      <button type="button" className="btn-link" onClick={() => setConfirmDate(b.date)} aria-label="Supprimer">
+                        ✕
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </section>
       )}
 
