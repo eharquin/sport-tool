@@ -1,4 +1,5 @@
 import Stepper from './Stepper.jsx'
+import WarmupPlan from './WarmupPlan.jsx'
 import { formatDateFR } from '../lib/cycle.js'
 import { formatSets, lastPerformance, progressionHint } from '../lib/stats.js'
 import { fmtClock } from '../lib/time.js'
@@ -12,8 +13,20 @@ export default function ExerciseCard({ slot, exercise, sessions, currentDate, ri
   const last = lastPerformance(sessions, exercise.name, currentDate)
   const hint = progressionHint(last, slot.reps)
 
-  const updateSet = (i, patch) =>
-    onChange({ ...exercise, sets: exercise.sets.map((s, j) => (j === i ? { ...s, ...patch } : s)) })
+  // Modifier la charge de la série 1 entraîne les séries suivantes qui avaient
+  // encore la même charge (évite de répéter les clics sur chaque série).
+  const updateSet = (i, patch) => {
+    const before = exercise.sets[i].weight_added_kg
+    const propagate = i === 0 && 'weight_added_kg' in patch
+    onChange({
+      ...exercise,
+      sets: exercise.sets.map((s, j) => {
+        if (j === i) return { ...s, ...patch }
+        if (propagate && j > i && s.weight_added_kg === before) return { ...s, weight_added_kg: patch.weight_added_kg }
+        return s
+      }),
+    })
+  }
 
   const addSet = () => {
     const prev = exercise.sets[exercise.sets.length - 1] ?? { weight_added_kg: 0, reps: slot.reps[0], rir: rirTarget }
@@ -67,12 +80,14 @@ export default function ExerciseCard({ slot, exercise, sessions, currentDate, ri
         )}
       </div>
 
+      <WarmupPlan slot={slot} workingWeight={exercise.sets[0]?.weight_added_kg ?? 0} onRest={onRest} exerciseName={exercise.name} />
+
       <div className="sets">
         {exercise.sets.map((s, i) => (
           <div className="set-row" key={i}>
             <span className="set-num">{i + 1}</span>
             <Stepper
-              label="Lest kg"
+              label={slot.load === 'added' ? 'Lest kg' : 'Charge kg'}
               value={s.weight_added_kg}
               step={slot.weightStep}
               decimals={slot.weightStep < 1 ? 2 : 1}

@@ -26,6 +26,7 @@ src/
   lib/github.js          # GET/PUT contents API, retry sur conflit de sha
   lib/cycle.js           # jour A/B/C, semaine du cycle, phase
   lib/stats.js           # dernière perf, conseil double progression, moyennes
+  lib/warmup.js          # calcul des paliers d'échauffement
   lib/storage.js         # localStorage : réglages, cache data, brouillon
   hooks/useSettings.js, useData.js
   hooks/useRestTimer.js, useSessionTimer.js, useWakeLock.js  # chronos, écran maintenu allumé
@@ -33,6 +34,7 @@ src/
     SessionForm.jsx      # écran Séance du jour
     ExerciseCard.jsx     # un exercice : variante, dernière perf, séries
     Stepper.jsx          # champ numérique gros boutons +/-
+    WarmupPlan.jsx       # paliers d'échauffement calculés (% de la charge de travail)
     RestTimer.jsx        # compte à rebours de repos (+30 s / stop, bip à zéro)
     SessionTimer.jsx     # chrono global de la séance
     PhaseBanner.jsx      # semaine / phase / RIR cible
@@ -66,3 +68,14 @@ sur les polyarticulaires lourds (squat/presse, RDL, dips et tractions lestés),
 1:30-2:00 sur rowing/pompes/fentes, 1:00 sur l'isolation. Le bouton « ▶ Repos »
 de chaque exercice lance le compte à rebours ; l'écran reste allumé pendant le
 repos (Screen Wake Lock) et un bip + vibration signalent la fin.
+
+## Échauffement
+
+Profil par exercice (`warmup` dans `program.js`, paliers dans `WARMUPS`), calculé
+depuis la charge saisie en série 1 :
+- `heavyFirst` (squat/presse, RDL) : à vide ×10-15 → 40 % ×8 → 60 % ×5 → 80 % ×2-3
+- `heavy` (dips/tractions lestés, rowing, fentes) : poids de corps ×8-10 → ~65 % ×4-5
+- `isolation` : une série à 50 % ×10-12, optionnelle (à sauter si le muscle vient de travailler)
+- `none` (gainage)
+
+Les séries d'échauffement ne sont pas enregistrées dans `data.json`.
