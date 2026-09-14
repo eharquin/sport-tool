@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { testConnection } from '../lib/github.js'
 import { isConfigured } from '../lib/storage.js'
 import { todayISO } from '../lib/cycle.js'
+import { WEIGHT_GOALS } from '../lib/analysis.js'
 
 /** Écran de configuration : token GitHub, repo cible, date de début du cycle. */
 export default function TokenConfig({ settings, onChange, onSaved }) {
@@ -88,6 +89,20 @@ export default function TokenConfig({ settings, onChange, onSaved }) {
         <button type="button" className="btn-link" onClick={() => setForm((f) => ({ ...f, cycleStart: todayISO() }))}>
           Commencer cette semaine
         </button>
+      </section>
+
+      <section className="card">
+        <h3>Objectif poids corporel</h3>
+        <label className="field">
+          <span>Sert à évaluer la tendance sur l'écran Poids</span>
+          <select value={form.goal ?? 'bulk'} onChange={set('goal')}>
+            {Object.entries(WEIGHT_GOALS).map(([k, g]) => (
+              <option key={k} value={k}>
+                {g.label} — {g.hint}
+              </option>
+            ))}
+          </select>
+        </label>
       </section>
 
       {status && <div className={`notice ${status.ok === false ? 'error' : status.ok ? 'ok' : ''}`}>{status.msg}</div>}

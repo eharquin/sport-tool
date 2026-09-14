@@ -135,4 +135,86 @@ export function weeklyMuscleSets(sessions, weeks = 4, today = new Date()) {
   }
 }
 
+// ---------- Calibration du RIR (séries AMRAP) ----------
+
+export const RIR_TEST_INTERVAL_DAYS = 21
+
+/**
+ * Pour chaque série AMRAP (jusqu'à l'échec) précédée d'une série à la même charge :
+ * reps attendues = reps + RIR de la série précédente ; biais = reps réelles − attendues.
+ * Biais positif = tu avais plus de reps en réserve que tu ne le pensais (RIR sous-estimé).
+ * La fatigue entre les deux séries rend la mesure légèrement conservatrice.
+ */
+export function rirCalibration(sessions) {
+  const tests = []
+  for (const s of sortedSessions(sessions)) {
+    for (const ex of s.exercises) {
+      ex.sets.forEach((set, i) => {
+        if (!set.amrap || i === 0) return
+        const prev = ex.sets[i - 1]
+        if (prev.amrap || prev.weight_added_kg !== set.weight_added_kg) return
+        const expected = prev.reps + prev.rir
+        tests.push({ date: s.date, name: ex.name, expected, actual: set.reps, bias: set.reps - expected })
+      })
+    }
+  }
+  const avg = (arr) => (arr.length ? Math.round((arr.reduce((a, t) => a + t.bias, 0) / arr.length) * 10) / 10 : null)
+  const byExercise = {}
+  tests.forEach((t) => (byExercise[t.name] ??= []).push(t))
+  const lastTest = tests.length ? tests[tests.length - 1].date : null
+  const daysSince = lastTest ? Math.floor((Date.now() - parseISO(lastTest).getTime()) / 86400000) : null
+  return {
+    tests,
+    bias: avg(tests),
+    perExercise: Object.entries(byExercise).map(([name, arr]) => ({ name, n: arr.length, bias: avg(arr) })),
+    lastTest,
+    daysSince,
+    testDue: sessions.length >= 4 && (daysSince === null || daysSince >= RIR_TEST_INTERVAL_DAYS),
+  }
+}
+
+// ---------- Tendance du poids corporel ----------
+
+// Variation hebdomadaire cible en % du poids de corps selon l'objectif.
+export const WEIGHT_GOALS = {
+  bulk: { label: 'Prise de masse', range: [0.25, 0.5], hint: '+0,25 à +0,5 %/sem limite le gain de gras' },
+  maintain: { label: 'Maintien', range: [-0.15, 0.15], hint: 'stable à ±0,15 %/sem' },
+  cut: { label: 'Sèche', range: [-1, -0.5], hint: '−0,5 à −1 %/sem préserve le muscle' },
+}
+
+/**
+ * Pente du poids (régression linéaire sur les pesées des `days` derniers jours).
+ * Nécessite ≥ 4 pesées réparties sur ≥ 14 jours. Retourne kg/semaine, %/semaine
+ * et la position par rapport à la zone cible de l'objectif.
+ */
+export function bodyweightTrend(entries, goal = 'bulk', days = 28, today = new Date()) {
+  const limit = new Date(today)
+  limit.setDate(limit.getDate() - days)
+  const pts = [...entries]
+    .filter((e) => parseISO(e.date) >= limit)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map((e) => ({ x: parseISO(e.date).getTime() / 86400000, y: e.weight_kg }))
+  if (pts.length < 4) return { ok: false, reason: 'Il faut au moins 4 pesées sur les 4 dernières semaines.' }
+  const span = pts[pts.length - 1].x - pts[0].x
+  if (span < 14) return { ok: false, reason: 'Il faut des pesées réparties sur au moins 2 semaines.' }
+  const n = pts.length
+  const mx = pts.reduce((a, p) => a + p.x, 0) / n
+  const my = pts.reduce((a, p) => a + p.y, 0) / n
+  const slope = pts.reduce((a, p) => a + (p.x - mx) * (p.y - my), 0) / pts.reduce((a, p) => a + (p.x - mx) ** 2, 0)
+  const perWeek = slope * 7
+  const pctPerWeek = (perWeek / my) * 100
+  const [lo, hi] = WEIGHT_GOALS[goal].range
+  const status = pctPerWeek < lo ? 'below' : pctPerWeek > hi ? 'above' : 'within'
+  return {
+    ok: true,
+    n,
+    spanDays: Math.round(span),
+    perWeek: Math.round(perWeek * 100) / 100,
+    pctPerWeek: Math.round(pctPerWeek * 100) / 100,
+    mean: Math.round(my * 10) / 10,
+    status,
+    goal: WEIGHT_GOALS[goal],
+  }
+}
+
 export { sessionLocation }

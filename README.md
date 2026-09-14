@@ -28,7 +28,8 @@ src/
   lib/stats.js           # dernière perf, conseil double progression, moyennes
   lib/warmup.js          # calcul des paliers d'échauffement
   lib/analysis.js        # e1RM ajusté RIR, détection de stagnation, volume hebdo / muscle
-  lib/storage.js         # localStorage : réglages, cache data, brouillon
+  lib/storage.js         # localStorage : réglages, cache data, brouillon, file d'attente
+  lib/ops.js             # opérations d'écriture sérialisables (rejouées hors-ligne)
   hooks/useSettings.js, useData.js
   hooks/useRestTimer.js, useSessionTimer.js, useWakeLock.js  # chronos, écran maintenu allumé
   components/
@@ -41,11 +42,23 @@ src/
     PhaseBanner.jsx      # semaine / phase / RIR cible
     ProgressCharts.jsx   # graphiques par exercice (e1RM, charge, reps)
     StagnationReport.jsx # bilan : exercices qui stagnent, signal de deload réactif
+    RirCalibration.jsx   # biais de RIR mesuré par les séries AMRAP
     MuscleVolume.jsx     # séries dures / muscle / semaine sur 4 semaines
     BodyweightScreen.jsx # poids corporel + moyenne mobile 7j + moyennes hebdo
     TokenConfig.jsx      # réglages / token
     Nav.jsx
 ```
+
+## Hors-ligne
+
+- **Service worker** (`vite-plugin-pwa`, mode `autoUpdate`) : l'app se charge sans
+  réseau ; une nouvelle version est installée en arrière-plan et active au
+  lancement suivant. L'API GitHub n'est jamais mise en cache.
+- **File d'attente** : une sauvegarde sans réseau est appliquée localement et mise
+  en attente (`muscu.pending`), puis rejouée dans l'ordre au retour de la connexion
+  (événement `online`, bouton ⟳, ou prochaine sauvegarde). Le bouton ⟳ affiche
+  « N en attente ». Une erreur GitHub (token, droits) n'est pas mise en attente : elle
+  est affichée.
 
 ## Modèle `data.json`
 
@@ -68,8 +81,9 @@ Commits générés : `Séance {date} - Jour {A|B|C}` et `Poids {date} - {kg} kg`
 
 Définis par exercice dans `src/config/program.js` (`rest`, en secondes) : 2:30-3:00
 sur les polyarticulaires lourds (squat/presse, RDL, dips et tractions lestés),
-1:30-2:00 sur rowing/pompes/fentes, 1:00 sur l'isolation. Le bouton « ▶ Repos »
-de chaque exercice lance le compte à rebours ; l'écran reste allumé pendant le
+1:30-2:00 sur rowing/pompes/fentes, 1:00 sur l'isolation. La coche à gauche de
+chaque série (« série faite ») lance le compte à rebours de l'exercice, le bouton
+« ▶ Repos » aussi ; l'écran reste allumé pendant le
 repos (Screen Wake Lock) et un bip + vibration signalent la fin.
 
 ## Échauffement
@@ -93,6 +107,13 @@ Les séries d'échauffement ne sont pas enregistrées dans `data.json`.
   Badge rouge sur l'exercice dans l'écran Séance ; si ≥ 50 % des exercices suivis
   stagnent (min. 3), l'app suggère un deload — le deload est donc réactif, pas
   seulement planifié en semaine 7.
+- **Calibration du RIR** : bouton « AMRAP » sous un exercice → la dernière série est
+  faite à l'échec. Reps attendues = reps + RIR de la série précédente à la même
+  charge ; l'écart moyen sur les tests donne le biais (positif = RIR sous-estimé).
+  Rappel automatique tous les 21 jours.
+- **Tendance du poids** : régression linéaire sur les pesées des 28 derniers jours
+  (≥ 4 pesées sur ≥ 14 jours), comparée à la zone cible de l'objectif choisi dans
+  Réglages : prise de masse +0,25-0,5 %/sem, maintien ±0,15, sèche −0,5-1.
 - **Volume par muscle** : `EXERCISE_MUSCLES` dans `program.js` attribue à chaque
   exercice ses muscles (1 = direct, 0.5 = indirect). Tableau des séries dures par
   semaine sur 4 semaines, zone cible 10-20, sous 6 = maintien.

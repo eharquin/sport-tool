@@ -5,6 +5,7 @@ import { LOCATIONS, slotByName } from '../config/program.js'
 import { historyWithE1rm } from '../lib/analysis.js'
 import { allExerciseNames, byLocation, formatSets } from '../lib/stats.js'
 import MuscleVolume from './MuscleVolume.jsx'
+import RirCalibration from './RirCalibration.jsx'
 import StagnationReport from './StagnationReport.jsx'
 
 const AXIS = { fontSize: 11, fill: 'var(--text-2)' }
@@ -141,6 +142,7 @@ export default function ProgressCharts({ data }) {
         </table>
       </section>
 
+      <RirCalibration sessions={data.sessions} />
       <MuscleVolume sessions={data.sessions} />
     </div>
   )

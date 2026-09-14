@@ -12,14 +12,28 @@ export default function App() {
   const [settings, updateSettings] = useSettings()
   const configured = isConfigured(settings)
   const [tab, setTab] = useState(configured ? 'session' : 'settings')
-  const { data, loading, error, lastSync, refresh, commit } = useData(settings)
+  const { data, loading, error, lastSync, online, pending, refresh, commit } = useData(settings)
 
   return (
     <div className="app">
       <header className="topbar">
         <span className="brand">Muscu</span>
-        <button type="button" className="sync" onClick={refresh} disabled={loading || !configured} title="Recharger depuis GitHub">
-          {loading ? '⟳ sync…' : lastSync ? `⟳ ${lastSync.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : '⟳'}
+        <button
+          type="button"
+          className={`sync ${pending.length ? 'pending' : ''} ${!online ? 'offline' : ''}`}
+          onClick={refresh}
+          disabled={loading || !configured}
+          title="Synchroniser avec GitHub"
+        >
+          {!online
+            ? `⚠ hors-ligne${pending.length ? ` · ${pending.length} en attente` : ''}`
+            : pending.length
+              ? `⟳ ${pending.length} en attente`
+              : loading
+                ? '⟳ sync…'
+                : lastSync
+                  ? `⟳ ${lastSync.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
+                  : '⟳'}
         </button>
       </header>
 
@@ -28,7 +42,7 @@ export default function App() {
       <main>
         {tab === 'session' && (configured ? <SessionForm data={data} settings={settings} onCommit={commit} /> : <NeedConfig go={() => setTab('settings')} />)}
         {tab === 'progress' && <ProgressCharts data={data} />}
-        {tab === 'bodyweight' && (configured ? <BodyweightScreen data={data} onCommit={commit} /> : <NeedConfig go={() => setTab('settings')} />)}
+        {tab === 'bodyweight' && (configured ? <BodyweightScreen data={data} settings={settings} onCommit={commit} /> : <NeedConfig go={() => setTab('settings')} />)}
         {tab === 'settings' && <TokenConfig settings={settings} onChange={updateSettings} onSaved={() => setTab('session')} />}
       </main>
 

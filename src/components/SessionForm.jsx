@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { DAY_KEYS, HOME_NOTE, LOCATIONS, slotsFor } from '../config/program.js'
 import { cycleInfo, dayForDate, formatDateFR, todayISO } from '../lib/cycle.js'
 import { lastPerformance, sessionLocation, sortedSessions } from '../lib/stats.js'
 import { clearDraft, loadDraft, saveDraft } from '../lib/storage.js'
-import { stagnationReport } from '../lib/analysis.js'
+import { rirCalibration, stagnationReport } from '../lib/analysis.js'
+import { upsertSession } from '../lib/ops.js'
 import { useRestTimer } from '../hooks/useRestTimer.js'
 import { useSessionTimer } from '../hooks/useSessionTimer.js'
 import { useWakeLock } from '../hooks/useWakeLock.js'
@@ -66,29 +67,44 @@ export default function SessionForm({ data, settings, onCommit }) {
   const alreadySaved = sessions.some((s) => s.date === date && s.day === day)
   const slots = useMemo(() => slotsFor(day, location), [day, location])
   const report = useMemo(() => stagnationReport(sessions, data.bodyweight, location), [sessions, data.bodyweight, location])
+  const cal = useMemo(() => rirCalibration(sessions), [sessions])
 
-  // Chargement du brouillon (si même date/jour) ou construction d'une séance neuve
+  // Vrai dès que l'utilisateur a modifié quelque chose : on ne reconstruit plus la séance.
+  const dirty = useRef(false)
+
+  // Chargement du brouillon (si même date/jour/lieu) ou construction d'une séance neuve
   useEffect(() => {
     const draft = loadDraft()
     if (draft && draft.date === date && draft.day === day && (draft.location ?? 'gym') === location) {
+      dirty.current = true
       setSession(draft)
     } else {
+      dirty.current = false
       setSession(buildSession(date, day, location, sessions, rir.max))
     }
-    // On ne reconstruit pas quand `sessions` change (refetch) pour ne pas écraser la saisie
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, day, location])
 
-  // Persistance du brouillon à chaque modification
+  // Données GitHub arrivées après le premier rendu (installation neuve, refetch) :
+  // on reconstruit le pré-remplissage tant que rien n'a été saisi.
   useEffect(() => {
-    if (session) saveDraft(session)
+    if (!dirty.current) setSession(buildSession(date, day, location, sessions, rir.max))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessions])
+
+  // Persistance du brouillon à chaque modification (seulement après une saisie)
+  useEffect(() => {
+    if (session && dirty.current) saveDraft(session)
   }, [session])
 
-  const updateExercise = (i, ex) =>
+  const updateExercise = (i, ex) => {
+    dirty.current = true
     setSession((s) => ({ ...s, exercises: s.exercises.map((e, j) => (j === i ? ex : e)) }))
+  }
 
   const reset = () => {
     clearDraft()
+    dirty.current = false
     setSession(buildSession(date, day, location, sessions, rir.max))
   }
 
@@ -100,22 +116,20 @@ export default function SessionForm({ data, settings, onCommit }) {
   const save = async () => {
     setSaving(true)
     setNotice(null)
-    const payload = { ...session, date, day, location, week, phase: phase.key }
+    // `done` (coche de séance en cours) reste dans le brouillon, pas dans data.json
+    const exercises = session.exercises.map((ex) => ({ ...ex, sets: ex.sets.map(({ done: _done, ...set }) => set) }))
+    const payload = { ...session, exercises, date, day, location, week, phase: phase.key }
     if (chrono.started) payload.duration_min = Math.max(1, Math.round(chrono.elapsedSec / 60))
     try {
-      await onCommit(
-        (d) => {
-          d.sessions = d.sessions.filter((s) => !(s.date === date && s.day === day))
-          d.sessions.push(payload)
-          d.sessions.sort((a, b) => a.date.localeCompare(b.date))
-          return d
-        },
-        `Séance ${date} - Jour ${day}${location === 'home' ? ' (maison)' : ''}`,
-      )
+      const { queued } = await onCommit(upsertSession(payload), `Séance ${date} - Jour ${day}${location === 'home' ? ' (maison)' : ''}`)
       clearDraft()
       chrono.reset()
       rest.stop()
-      setNotice({ ok: true, msg: `Séance ${formatDateFR(date)} commitée sur GitHub ✓` })
+      setNotice(
+        queued
+          ? { ok: true, msg: `Hors-ligne : séance ${formatDateFR(date)} enregistrée, elle sera commitée au retour du réseau.` }
+          : { ok: true, msg: `Séance ${formatDateFR(date)} commitée sur GitHub ✓` },
+      )
     } catch (e) {
       setNotice({ ok: false, msg: `Échec de la sauvegarde : ${e.message}` })
     } finally {
@@ -156,6 +170,13 @@ export default function SessionForm({ data, settings, onCommit }) {
       {report.suggestDeload && (
         <div className="notice error">
           {report.stagnant.length}/{report.items.length} exercices stagnent → deload conseillé cette semaine (RIR 4-5, volume ÷ 2).
+        </div>
+      )}
+
+      {cal.testDue && !session.exercises.some((ex) => ex.sets.some((x) => x.amrap)) && (
+        <div className="notice">
+          Calibration RIR : {cal.lastTest ? `dernier test il y a ${cal.daysSince} j` : 'aucun test'} → fais une dernière série
+          AMRAP sur un exercice aujourd'hui (bouton « AMRAP »).
         </div>
       )}
 

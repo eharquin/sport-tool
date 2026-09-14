@@ -2,13 +2,17 @@ import { useMemo, useState } from 'react'
 import { CartesianGrid, ComposedChart, Line, ResponsiveContainer, Scatter, Tooltip, XAxis, YAxis } from 'recharts'
 import { formatDateFR, todayISO } from '../lib/cycle.js'
 import { bodyweightSeries, weeklyAverages } from '../lib/stats.js'
+import { bodyweightTrend, WEIGHT_GOALS } from '../lib/analysis.js'
+import { upsertBodyweight } from '../lib/ops.js'
 import Stepper from './Stepper.jsx'
 
 const AXIS = { fontSize: 11, fill: 'var(--text-2)' }
 
 /** Écran Poids corporel : saisie du jour, courbe + moyenne mobile 7j, moyennes hebdo. */
-export default function BodyweightScreen({ data, onCommit }) {
+export default function BodyweightScreen({ data, settings, onCommit }) {
   const series = useMemo(() => bodyweightSeries(data.bodyweight), [data.bodyweight])
+  const goal = settings?.goal ?? 'bulk'
+  const trend = useMemo(() => bodyweightTrend(data.bodyweight, goal), [data.bodyweight, goal])
   const weekly = useMemo(() => weeklyAverages(data.bodyweight), [data.bodyweight])
   const lastWeight = series.length ? series[series.length - 1].weight : 70
 
@@ -23,16 +27,8 @@ export default function BodyweightScreen({ data, onCommit }) {
     setSaving(true)
     setNotice(null)
     try {
-      await onCommit(
-        (d) => {
-          d.bodyweight = d.bodyweight.filter((b) => b.date !== date)
-          d.bodyweight.push({ date, weight_kg: weight })
-          d.bodyweight.sort((a, b) => a.date.localeCompare(b.date))
-          return d
-        },
-        `Poids ${date} - ${weight} kg`,
-      )
-      setNotice({ ok: true, msg: `${weight} kg enregistré pour le ${formatDateFR(date)} ✓` })
+      const { queued } = await onCommit(upsertBodyweight({ date, weight_kg: weight }), `Poids ${date} - ${weight} kg`)
+      setNotice({ ok: true, msg: `${weight} kg enregistré pour le ${formatDateFR(date)}${queued ? ' (hors-ligne, en attente)' : ' ✓'}` })
     } catch (e) {
       setNotice({ ok: false, msg: `Échec : ${e.message}` })
     } finally {
@@ -56,6 +52,35 @@ export default function BodyweightScreen({ data, onCommit }) {
             {saving ? 'Commit en cours…' : 'Enregistrer'}
           </button>
         </div>
+      </section>
+
+      <section className="card">
+        <h3>Tendance 4 semaines</h3>
+        {trend.ok ? (
+          <>
+            <p className={`trend trend-${trend.status}`}>
+              <strong>
+                {trend.perWeek > 0 ? '+' : ''}
+                {trend.perWeek} kg/sem
+              </strong>{' '}
+              ({trend.pctPerWeek > 0 ? '+' : ''}
+              {trend.pctPerWeek} %/sem) —{' '}
+              {trend.status === 'within' ? 'dans la cible' : trend.status === 'below' ? 'sous la cible' : 'au-dessus de la cible'}
+            </p>
+            <p className="muted small">
+              Objectif {trend.goal.label} : {trend.goal.hint}. Régression sur {trend.n} pesées / {trend.spanDays} j, moyenne{' '}
+              {trend.mean} kg.
+              {trend.status === 'below' && goal === 'bulk' && ' → augmente légèrement les apports (+100-200 kcal/j).'}
+              {trend.status === 'above' && goal === 'bulk' && ' → le surplus est trop grand, réduis un peu (−100-200 kcal/j).'}
+              {trend.status === 'above' && goal === 'cut' && ' → déficit insuffisant.'}
+              {trend.status === 'below' && goal === 'cut' && ' → perte trop rapide, risque de perte musculaire.'}
+            </p>
+          </>
+        ) : (
+          <p className="muted small">
+            {trend.reason} Objectif actuel : {WEIGHT_GOALS[goal].label} ({WEIGHT_GOALS[goal].hint}) — modifiable dans Réglages.
+          </p>
+        )}
       </section>
 
       {series.length > 0 && (

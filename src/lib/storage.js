@@ -5,6 +5,7 @@ const KEYS = {
   settings: 'muscu.settings',
   cache: 'muscu.data-cache',
   draft: 'muscu.draft',
+  pending: 'muscu.pending',
 }
 
 const DEFAULT_SETTINGS = {
@@ -14,6 +15,7 @@ const DEFAULT_SETTINGS = {
   branch: 'main',
   path: 'data.json',
   cycleStart: '',
+  goal: 'bulk', // 'bulk' | 'maintain' | 'cut' — cible de variation du poids corporel
 }
 
 function read(key, fallback) {
@@ -43,6 +45,10 @@ export const saveCache = (data) => write(KEYS.cache, data)
 export const loadDraft = () => read(KEYS.draft, null)
 export const saveDraft = (d) => write(KEYS.draft, d)
 export const clearDraft = () => write(KEYS.draft, null)
+
+// File d'attente des écritures non synchronisées : [{ id, op, message, createdAt }]
+export const loadPending = () => read(KEYS.pending, [])
+export const savePending = (list) => write(KEYS.pending, list.length ? list : null)
 
 export function isConfigured(s) {
   return Boolean(s.token && s.owner && s.repo)

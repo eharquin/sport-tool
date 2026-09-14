@@ -39,9 +39,32 @@ export default function ExerciseCard({ slot, exercise, sessions, bodyweight, cur
     })
   }
 
+  // Coche "série faite" : lance le repos de l'exercice ; re-cocher annule sans repos.
+  const toggleDone = (i) => {
+    const done = !exercise.sets[i].done
+    onChange({ ...exercise, sets: exercise.sets.map((s, j) => (j === i ? { ...s, done } : s)) })
+    if (done) onRest(slot.rest, exercise.name)
+  }
+
+  // AMRAP = dernière série jusqu'à l'échec (RIR 0) pour calibrer le RIR.
+  const lastIdx = exercise.sets.length - 1
+  const amrapOn = Boolean(exercise.sets[lastIdx]?.amrap)
+  const toggleAmrap = () =>
+    onChange({
+      ...exercise,
+      sets: exercise.sets.map((s, j) => {
+        if (j !== lastIdx) return s
+        const { amrap, ...rest } = s
+        return amrap ? rest : { ...rest, amrap: true, rir: 0 }
+      }),
+    })
+  const amrapPrev = amrapOn && lastIdx > 0 ? exercise.sets[lastIdx - 1] : null
+  const amrapExpected =
+    amrapPrev && amrapPrev.weight_added_kg === exercise.sets[lastIdx].weight_added_kg ? amrapPrev.reps + amrapPrev.rir : null
+
   const addSet = () => {
     const prev = exercise.sets[exercise.sets.length - 1] ?? { weight_added_kg: 0, reps: slot.reps[0], rir: rirTarget }
-    onChange({ ...exercise, sets: [...exercise.sets, { ...prev }] })
+    onChange({ ...exercise, sets: [...exercise.sets, { ...prev, done: false }] })
   }
 
   const removeSet = () => {
@@ -105,8 +128,16 @@ export default function ExerciseCard({ slot, exercise, sessions, bodyweight, cur
 
       <div className="sets">
         {exercise.sets.map((s, i) => (
-          <div className="set-row" key={i}>
-            <span className="set-num">{i + 1}</span>
+          <div className={`set-row ${s.done ? 'done' : ''} ${s.amrap ? 'amrap' : ''}`} key={i}>
+            <button
+              type="button"
+              className={`set-check ${s.done ? 'done' : ''}`}
+              onClick={() => toggleDone(i)}
+              aria-label={s.done ? `Série ${i + 1} faite` : `Valider la série ${i + 1}`}
+              title={s.done ? 'Série faite (annuler)' : 'Série faite → lance le repos'}
+            >
+              {s.done ? '✓' : i + 1}
+            </button>
             <Stepper
               label={slot.load === 'band' ? 'Élastique niv.' : slot.load === 'added' ? 'Lest kg' : 'Charge kg'}
               value={s.weight_added_kg}
@@ -122,14 +153,30 @@ export default function ExerciseCard({ slot, exercise, sessions, bodyweight, cur
               max={unit === 's' ? 600 : 100}
               onChange={(v) => updateSet(i, { reps: v })}
             />
-            <Stepper label="RIR" value={s.rir} step={1} min={0} max={6} onChange={(v) => updateSet(i, { rir: v })} />
+            {s.amrap ? (
+              <Stepper label="AMRAP" value={0} step={1} min={0} max={0} onChange={() => {}} />
+            ) : (
+              <Stepper label="RIR" value={s.rir} step={1} min={0} max={6} onChange={(v) => updateSet(i, { rir: v })} />
+            )}
           </div>
         ))}
       </div>
 
+      {amrapOn && (
+        <div className="hint hint-amrap">
+          Dernière série à l'échec.
+          {amrapExpected !== null
+            ? ` Attendu ≈ ${amrapExpected} reps (série précédente : ${amrapPrev.reps} + RIR ${amrapPrev.rir}). Note le vrai nombre.`
+            : ' Garde la même charge que la série précédente pour que le test soit exploitable.'}
+        </div>
+      )}
+
       <div className="set-actions">
         <button type="button" className="btn small rest-btn" onClick={() => onRest(slot.rest, exercise.name)}>
           ▶ Repos {fmtClock(slot.rest)}
+        </button>
+        <button type="button" className={`btn small secondary amrap-btn ${amrapOn ? 'active' : ''}`} onClick={toggleAmrap}>
+          AMRAP
         </button>
         <span className="spacer" />
         <button type="button" className="btn small secondary" onClick={removeSet} disabled={exercise.sets.length <= 1}>

@@ -104,11 +104,19 @@ code {
   color: var(--text-2);
   font-size: 0.85rem;
 }
+.sync.pending {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.sync.offline {
+  border-color: var(--err);
+  color: var(--err);
+}
 main {
   flex: 1;
 }
 .screen {
-  padding: 12px 12px 24px;
+  padding: 12px 10px 24px;
   max-width: 640px;
   margin: 0 auto;
 }
@@ -116,7 +124,7 @@ main {
   background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 14px;
+  padding: 10px;
   margin-bottom: 12px;
 }
 
@@ -296,6 +304,27 @@ main {
 .hint-stagnant {
   color: var(--err);
 }
+.hint-amrap {
+  color: var(--series-2);
+}
+.amrap-btn.active {
+  background: var(--series-2);
+  border-color: var(--series-2);
+  color: #fff;
+}
+.set-row.amrap .stepper:last-child .stepper-row {
+  border-color: var(--series-2);
+}
+.trend {
+  font-size: 1.05rem;
+}
+.trend-within {
+  color: var(--ok);
+}
+.trend-below,
+.trend-above {
+  color: var(--accent);
+}
 
 /* Bilan / volume */
 .stag-list {
@@ -351,15 +380,30 @@ main {
 }
 .set-row {
   display: grid;
-  grid-template-columns: 18px 1fr 1fr 1fr;
+  grid-template-columns: 30px 1fr 1fr 1fr;
   gap: 6px;
   align-items: end;
 }
-.set-num {
-  font-size: 0.8rem;
+.set-row.done .stepper-row {
+  opacity: 0.55;
+}
+.set-check {
+  width: 30px;
+  min-height: var(--tap);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-3);
   color: var(--text-2);
-  padding-bottom: 14px;
-  text-align: center;
+  font-size: 0.85rem;
+  padding: 0;
+  touch-action: manipulation;
+}
+.set-check.done {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: #06301a;
+  font-weight: 700;
+  font-size: 1.1rem;
 }
 .set-actions {
   display: flex;
@@ -390,7 +434,7 @@ main {
   background: var(--bg-3);
 }
 .stepper-btn {
-  flex: 0 0 38px;
+  flex: 0 0 30px;
   min-height: var(--tap);
   border: none;
   background: var(--bg-3);
@@ -412,7 +456,7 @@ main {
   background: var(--bg-2);
   text-align: center;
   font-weight: 600;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-variant-numeric: tabular-nums;
   padding: 0;
 }
