@@ -8,9 +8,9 @@ import { fmtClock } from '../lib/time.js'
  * Un exercice de la séance : choix de variante, dernière perf + conseil de
  * progression, et une ligne de steppers par série.
  */
-export default function ExerciseCard({ slot, exercise, sessions, currentDate, rirTarget, onChange, onRest }) {
+export default function ExerciseCard({ slot, exercise, sessions, currentDate, location, rirTarget, onChange, onRest }) {
   const unit = slot.unit ? slot.unit : ''
-  const last = lastPerformance(sessions, exercise.name, currentDate)
+  const last = lastPerformance(sessions, exercise.name, currentDate, location)
   const hint = progressionHint(last, slot.reps)
 
   // Modifier la charge de la série 1 entraîne les séries suivantes qui avaient
@@ -64,6 +64,8 @@ export default function ExerciseCard({ slot, exercise, sessions, currentDate, ri
           {slot.sets[1] !== slot.sets[0] && `-${slot.sets[1]}`}×{slot.reps[0]}-{slot.reps[1]}
           {unit}
           {slot.perSide && '/côté'}
+          {slot.note && ` (${slot.note})`}
+          {slot.rir && ` · RIR ${slot.rir[0] === slot.rir[1] ? slot.rir[0] : `${slot.rir[0]}-${slot.rir[1]}`}`}
           <span className="rest-hint"> · repos {fmtClock(slot.rest)}</span>
         </span>
       </header>
@@ -71,7 +73,7 @@ export default function ExerciseCard({ slot, exercise, sessions, currentDate, ri
       <div className="last-perf">
         {last ? (
           <>
-            <span className="muted">Dernière ({formatDateFR(last.date)}) :</span> {formatSets(last.sets, unit)}
+            <span className="muted">Dernière ({formatDateFR(last.date)}) :</span> {formatSets(last.sets, unit, slot.load)}
             <span className="muted"> @RIR {Math.round(last.sets.reduce((a, s) => a + s.rir, 0) / last.sets.length)}</span>
             {hint && <div className={`hint hint-${hint.kind}`}>{hint.text}</div>}
           </>
@@ -80,18 +82,18 @@ export default function ExerciseCard({ slot, exercise, sessions, currentDate, ri
         )}
       </div>
 
-      <WarmupPlan slot={slot} workingWeight={exercise.sets[0]?.weight_added_kg ?? 0} onRest={onRest} exerciseName={exercise.name} />
+      {slot.load !== 'band' && <WarmupPlan slot={slot} workingWeight={exercise.sets[0]?.weight_added_kg ?? 0} onRest={onRest} exerciseName={exercise.name} />}
 
       <div className="sets">
         {exercise.sets.map((s, i) => (
           <div className="set-row" key={i}>
             <span className="set-num">{i + 1}</span>
             <Stepper
-              label={slot.load === 'added' ? 'Lest kg' : 'Charge kg'}
+              label={slot.load === 'band' ? 'Élastique niv.' : slot.load === 'added' ? 'Lest kg' : 'Charge kg'}
               value={s.weight_added_kg}
-              step={slot.weightStep}
-              decimals={slot.weightStep < 1 ? 2 : 1}
-              max={500}
+              step={slot.load === 'band' ? 1 : slot.weightStep}
+              decimals={slot.load === 'band' ? 0 : slot.weightStep < 1 ? 2 : 1}
+              max={slot.load === 'band' ? 20 : 500}
               onChange={(v) => updateSet(i, { weight_added_kg: v })}
             />
             <Stepper

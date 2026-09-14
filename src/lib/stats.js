@@ -7,9 +7,22 @@ export function sortedSessions(sessions) {
   return [...sessions].sort((a, b) => a.date.localeCompare(b.date))
 }
 
-/** Dernière séance (la plus récente) contenant l'exercice `name`, hors `excludeDate`. */
-export function lastPerformance(sessions, name, excludeDate) {
-  const list = sortedSessions(sessions).filter((s) => s.date !== excludeDate)
+/** Lieu d'une séance ; les séances antérieures au champ `location` sont des séances salle. */
+export function sessionLocation(session) {
+  return session.location ?? 'gym'
+}
+
+/** Séances d'un lieu donné ('all' = toutes). */
+export function byLocation(sessions, location) {
+  return location === 'all' ? sessions : sessions.filter((s) => sessionLocation(s) === location)
+}
+
+/**
+ * Dernière séance (la plus récente) contenant l'exercice `name`, hors `excludeDate`.
+ * Filtrée par lieu : les charges salle et maison ne sont pas comparables.
+ */
+export function lastPerformance(sessions, name, excludeDate, location = 'all') {
+  const list = sortedSessions(byLocation(sessions, location)).filter((s) => s.date !== excludeDate)
   for (let i = list.length - 1; i >= 0; i--) {
     const ex = list[i].exercises.find((e) => e.name === name)
     if (ex && ex.sets.length) return { date: list[i].date, sets: ex.sets }
@@ -28,6 +41,7 @@ export function exerciseHistory(sessions, name) {
       return {
         date: s.date,
         week: s.week,
+        location: sessionLocation(s),
         maxWeight: Math.max(...weights),
         avgReps: Math.round((reps.reduce((a, b) => a + b, 0) / reps.length) * 10) / 10,
         totalReps: reps.reduce((a, b) => a + b, 0),
@@ -60,8 +74,9 @@ export function progressionHint(last, repRange) {
   return { kind: 'reps', text: `Vise plus de reps (objectif ${max})` }
 }
 
-export function formatSets(sets, unit = '') {
-  return sets.map((s) => `${s.weight_added_kg > 0 ? `+${s.weight_added_kg}` : '0'}×${s.reps}${unit}`).join('  ')
+export function formatSets(sets, unit = '', load = 'added') {
+  const w = (kg) => (load === 'band' ? `n${kg}` : kg > 0 && load === 'added' ? `+${kg}` : `${kg}`)
+  return sets.map((s) => `${w(s.weight_added_kg)}×${s.reps}${unit}`).join('  ')
 }
 
 /** Poids corporel trié + moyenne mobile glissante sur 7 jours calendaires. */

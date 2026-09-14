@@ -228,6 +228,33 @@ main {
   font-weight: 600;
 }
 
+/* Sélecteur segmenté (Salle / Maison) */
+.segmented {
+  display: flex;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 3px;
+  margin-bottom: 12px;
+}
+.seg {
+  flex: 1;
+  min-height: 44px;
+  border: none;
+  border-radius: 9px;
+  background: none;
+  color: var(--text-2);
+  font-weight: 600;
+}
+.seg.active {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.home-note {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* Exercice */
 .exercise-head {
   display: flex;
