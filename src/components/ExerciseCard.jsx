@@ -3,15 +3,26 @@ import WarmupPlan from './WarmupPlan.jsx'
 import { formatDateFR } from '../lib/cycle.js'
 import { formatSets, lastPerformance, progressionHint } from '../lib/stats.js'
 import { fmtClock } from '../lib/time.js'
+import { bodyweightAt, e1rm, historyWithE1rm, stagnation } from '../lib/analysis.js'
+import { byLocation } from '../lib/stats.js'
 
 /**
  * Un exercice de la séance : choix de variante, dernière perf + conseil de
  * progression, et une ligne de steppers par série.
  */
-export default function ExerciseCard({ slot, exercise, sessions, currentDate, location, rirTarget, onChange, onRest }) {
+export default function ExerciseCard({ slot, exercise, sessions, bodyweight, currentDate, location, rirTarget, onChange, onRest }) {
   const unit = slot.unit ? slot.unit : ''
   const last = lastPerformance(sessions, exercise.name, currentDate, location)
   const hint = progressionHint(last, slot.reps)
+  const isBand = slot.load === 'band'
+  const lastE1rm = last && !isBand ? Math.max(...last.sets.map((x) => e1rm(x, slot, bodyweightAt(bodyweight, last.date)))) : null
+  const stag = stagnation(
+    historyWithE1rm(
+      byLocation(sessions, location).filter((x) => x.date !== currentDate),
+      exercise.name,
+      bodyweight,
+    ),
+  )
 
   // Modifier la charge de la série 1 entraîne les séries suivantes qui avaient
   // encore la même charge (évite de répéter les clics sur chaque série).
@@ -75,7 +86,15 @@ export default function ExerciseCard({ slot, exercise, sessions, currentDate, lo
           <>
             <span className="muted">Dernière ({formatDateFR(last.date)}) :</span> {formatSets(last.sets, unit, slot.load)}
             <span className="muted"> @RIR {Math.round(last.sets.reduce((a, s) => a + s.rir, 0) / last.sets.length)}</span>
-            {hint && <div className={`hint hint-${hint.kind}`}>{hint.text}</div>}
+            {lastE1rm !== null && <span className="muted"> · e1RM {lastE1rm}</span>}
+            {stag.stagnant ? (
+              <div className="hint hint-stagnant">
+                Stagne : {stag.sinceBest} séances sans battre l'e1RM de {stag.best} kg → change de variante ou allège
+                cet exercice
+              </div>
+            ) : (
+              hint && <div className={`hint hint-${hint.kind}`}>{hint.text}</div>
+            )}
           </>
         ) : (
           <span className="muted">Première fois — pas d'historique</span>

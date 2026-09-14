@@ -293,6 +293,56 @@ main {
 .hint-hold {
   color: var(--text-2);
 }
+.hint-stagnant {
+  color: var(--err);
+}
+
+/* Bilan / volume */
+.stag-list {
+  margin: 0 0 8px;
+  padding-left: 18px;
+  font-size: 0.9rem;
+}
+.stag-list li {
+  margin-bottom: 4px;
+}
+.ok {
+  color: var(--ok);
+}
+.table-wrap {
+  overflow-x: auto;
+}
+.table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.table.volume td,
+.table.volume th {
+  padding: 6px 6px;
+  white-space: nowrap;
+}
+.vol-none {
+  color: var(--text-2);
+}
+.vol-low {
+  color: var(--err);
+}
+.vol-below {
+  color: var(--accent);
+}
+.vol-target {
+  color: var(--ok);
+}
+.vol-high {
+  color: var(--series-2);
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 0.78rem;
+  margin-top: 8px;
+}
 
 .sets {
   display: flex;

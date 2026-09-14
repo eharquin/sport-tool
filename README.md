@@ -27,6 +27,7 @@ src/
   lib/cycle.js           # jour A/B/C, semaine du cycle, phase
   lib/stats.js           # dernière perf, conseil double progression, moyennes
   lib/warmup.js          # calcul des paliers d'échauffement
+  lib/analysis.js        # e1RM ajusté RIR, détection de stagnation, volume hebdo / muscle
   lib/storage.js         # localStorage : réglages, cache data, brouillon
   hooks/useSettings.js, useData.js
   hooks/useRestTimer.js, useSessionTimer.js, useWakeLock.js  # chronos, écran maintenu allumé
@@ -38,7 +39,9 @@ src/
     RestTimer.jsx        # compte à rebours de repos (+30 s / stop, bip à zéro)
     SessionTimer.jsx     # chrono global de la séance
     PhaseBanner.jsx      # semaine / phase / RIR cible
-    ProgressCharts.jsx   # graphiques par exercice
+    ProgressCharts.jsx   # graphiques par exercice (e1RM, charge, reps)
+    StagnationReport.jsx # bilan : exercices qui stagnent, signal de deload réactif
+    MuscleVolume.jsx     # séries dures / muscle / semaine sur 4 semaines
     BodyweightScreen.jsx # poids corporel + moyenne mobile 7j + moyennes hebdo
     TokenConfig.jsx      # réglages / token
     Nav.jsx
@@ -79,3 +82,17 @@ depuis la charge saisie en série 1 :
 - `none` (gainage)
 
 Les séries d'échauffement ne sont pas enregistrées dans `data.json`.
+
+## Analyses (écran Progression)
+
+- **e1RM** : 1RM estimé par Epley, `charge × (1 + (reps + RIR) / 30)`. Pour les
+  exercices lestés, la charge totale inclut le poids de corps (dernière pesée
+  connue) et la courbe affiche l'équivalent en lest. Non calculé pour les élastiques.
+- **Stagnation** : un exercice stagne quand ses 3 dernières séances (hors deload)
+  n'ont pas battu son meilleur e1RM d'au moins 1 kg (lestés) ou 1 % (autres).
+  Badge rouge sur l'exercice dans l'écran Séance ; si ≥ 50 % des exercices suivis
+  stagnent (min. 3), l'app suggère un deload — le deload est donc réactif, pas
+  seulement planifié en semaine 7.
+- **Volume par muscle** : `EXERCISE_MUSCLES` dans `program.js` attribue à chaque
+  exercice ses muscles (1 = direct, 0.5 = indirect). Tableau des séries dures par
+  semaine sur 4 semaines, zone cible 10-20, sous 6 = maintien.

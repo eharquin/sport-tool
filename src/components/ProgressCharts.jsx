@@ -1,8 +1,11 @@
 import { useMemo, useState } from 'react'
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { formatDateFR } from '../lib/cycle.js'
-import { LOCATIONS } from '../config/program.js'
-import { allExerciseNames, byLocation, exerciseHistory, formatSets } from '../lib/stats.js'
+import { LOCATIONS, slotByName } from '../config/program.js'
+import { historyWithE1rm } from '../lib/analysis.js'
+import { allExerciseNames, byLocation, formatSets } from '../lib/stats.js'
+import MuscleVolume from './MuscleVolume.jsx'
+import StagnationReport from './StagnationReport.jsx'
 
 const AXIS = { fontSize: 11, fill: 'var(--text-2)' }
 const GRID = 'var(--grid)'
@@ -48,7 +51,9 @@ export default function ProgressCharts({ data }) {
   const names = useMemo(() => allExerciseNames(sessions), [sessions])
   const [selected, setSelected] = useState('')
   const name = names.includes(selected) ? selected : names[0] || ''
-  const history = useMemo(() => (name ? exerciseHistory(sessions, name) : []), [sessions, name])
+  const history = useMemo(() => (name ? historyWithE1rm(sessions, name, data.bodyweight) : []), [sessions, name, data.bodyweight])
+  const slot = name ? slotByName(name) : null
+  const isBand = slot?.load === 'band'
 
   const filterBar = (
     <div className="segmented" role="group" aria-label="Lieu">
@@ -66,6 +71,7 @@ export default function ProgressCharts({ data }) {
         <h2>Progression</h2>
         {filterBar}
         <p className="muted">Aucune séance enregistrée pour ce filtre.</p>
+        <MuscleVolume sessions={data.sessions} />
       </div>
     )
   }
@@ -75,6 +81,9 @@ export default function ProgressCharts({ data }) {
       <h2>Progression</h2>
       {filterBar}
       {filter === 'all' && <p className="muted small">Point plein = salle, point creux = maison. Les charges ne sont pas comparables entre les deux.</p>}
+
+      {filter !== 'all' && <StagnationReport sessions={data.sessions} bodyweight={data.bodyweight} location={filter} />}
+
       <label className="field">
         <span>Exercice</span>
         <select value={name} onChange={(e) => setSelected(e.target.value)}>
@@ -87,9 +96,23 @@ export default function ProgressCharts({ data }) {
       </label>
 
       <section className="card">
-        <MiniLineChart data={history} dataKey="maxWeight" label="Lest max (kg)" unit=" kg" />
+        {!isBand && (
+          <>
+            <MiniLineChart data={history} dataKey="bestE1rm" label={slot?.load === 'added' ? 'e1RM (équivalent lest, kg)' : 'e1RM (kg)'} unit=" kg" />
+            <p className="muted small">
+              1RM estimé (Epley) ajusté du RIR
+              {slot?.load === 'added' ? ', poids de corps inclus dans le calcul' : ''}. Moins fiable au-delà de ~12 reps.
+            </p>
+          </>
+        )}
+        <MiniLineChart
+          data={history}
+          dataKey="maxWeight"
+          label={isBand ? 'Niveau d\'élastique max' : slot?.load === 'added' ? 'Lest max (kg)' : 'Charge max (kg)'}
+          unit={isBand ? '' : ' kg'}
+          color={isBand ? 'var(--series-1)' : 'var(--series-3)'}
+        />
         <MiniLineChart data={history} dataKey="avgReps" label="Reps moyennes par série" color="var(--series-2)" />
-        <MiniLineChart data={history} dataKey="volume" label="Volume (lest × reps)" unit=" kg" color="var(--series-3)" />
       </section>
 
       <section className="card">
@@ -101,7 +124,7 @@ export default function ProgressCharts({ data }) {
               <th>Lieu</th>
               <th>S.</th>
               <th>Séries</th>
-              <th>RIR</th>
+              <th>e1RM</th>
             </tr>
           </thead>
           <tbody>
@@ -110,13 +133,15 @@ export default function ProgressCharts({ data }) {
                 <td>{formatDateFR(h.date)}</td>
                 <td>{LOCATIONS[h.location].icon}</td>
                 <td>{h.week}</td>
-                <td className="mono">{formatSets(h.sets)}</td>
-                <td>{h.avgRir}</td>
+                <td className="mono">{formatSets(h.sets, '', slot?.load)}</td>
+                <td className="num">{isBand ? '—' : h.bestE1rm}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </section>
+
+      <MuscleVolume sessions={data.sessions} />
     </div>
   )
 }

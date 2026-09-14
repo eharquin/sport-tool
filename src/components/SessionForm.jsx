@@ -3,6 +3,7 @@ import { DAY_KEYS, HOME_NOTE, LOCATIONS, slotsFor } from '../config/program.js'
 import { cycleInfo, dayForDate, formatDateFR, todayISO } from '../lib/cycle.js'
 import { lastPerformance, sessionLocation, sortedSessions } from '../lib/stats.js'
 import { clearDraft, loadDraft, saveDraft } from '../lib/storage.js'
+import { stagnationReport } from '../lib/analysis.js'
 import { useRestTimer } from '../hooks/useRestTimer.js'
 import { useSessionTimer } from '../hooks/useSessionTimer.js'
 import { useWakeLock } from '../hooks/useWakeLock.js'
@@ -64,6 +65,7 @@ export default function SessionForm({ data, settings, onCommit }) {
   const sessions = useMemo(() => sortedSessions(data.sessions), [data.sessions])
   const alreadySaved = sessions.some((s) => s.date === date && s.day === day)
   const slots = useMemo(() => slotsFor(day, location), [day, location])
+  const report = useMemo(() => stagnationReport(sessions, data.bodyweight, location), [sessions, data.bodyweight, location])
 
   // Chargement du brouillon (si même date/jour) ou construction d'une séance neuve
   useEffect(() => {
@@ -151,6 +153,12 @@ export default function SessionForm({ data, settings, onCommit }) {
 
       <SessionTimer {...chrono} onStart={chrono.start} onStop={chrono.stop} onReset={chrono.reset} />
 
+      {report.suggestDeload && (
+        <div className="notice error">
+          {report.stagnant.length}/{report.items.length} exercices stagnent → deload conseillé cette semaine (RIR 4-5, volume ÷ 2).
+        </div>
+      )}
+
       {alreadySaved && <div className="notice">Séance déjà enregistrée ce jour — la sauvegarde la remplacera.</div>}
 
       {session.exercises.map((ex, i) => (
@@ -159,6 +167,7 @@ export default function SessionForm({ data, settings, onCommit }) {
           slot={slots[i]}
           exercise={ex}
           sessions={sessions}
+          bodyweight={data.bodyweight}
           currentDate={date}
           location={location}
           rirTarget={slotRir(slots[i], rir.max)}

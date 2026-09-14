@@ -74,6 +74,68 @@ export const DAYS = {
 
 export const DAY_KEYS = ['A', 'B', 'C']
 
+// Groupes musculaires suivis pour le volume hebdomadaire.
+export const MUSCLES = {
+  quads: 'Quadriceps',
+  hamstrings: 'Ischios',
+  glutes: 'Fessiers',
+  calves: 'Mollets',
+  chest: 'Pectoraux',
+  back: 'Dos',
+  side_delts: 'Deltoïdes lat.',
+  biceps: 'Biceps',
+  triceps: 'Triceps',
+  core: 'Abdos / gainage',
+}
+
+// Contribution de chaque exercice (1 = série directe, 0.5 = travail indirect).
+// Zone efficace usuelle : ~10-20 séries dures / muscle / semaine (voir VOLUME_ZONES).
+export const EXERCISE_MUSCLES = {
+  // Salle
+  Squat: { quads: 1, glutes: 1 },
+  'Presse à cuisses': { quads: 1, glutes: 0.5 },
+  'Squat variante': { quads: 1, glutes: 1 },
+  'Dips lestés': { chest: 1, triceps: 1 },
+  'Tractions pronation': { back: 1, biceps: 0.5 },
+  'Rowing barre': { back: 1, biceps: 0.5 },
+  'Rowing haltère': { back: 1, biceps: 0.5 },
+  Rowing: { back: 1, biceps: 0.5 },
+  'Pompes lestées': { chest: 1, triceps: 0.5 },
+  'Pompes déclinées': { chest: 1, triceps: 0.5 },
+  'Élévations latérales': { side_delts: 1 },
+  'Cable crunch': { core: 1 },
+  'Soulevé de terre roumain': { hamstrings: 1, glutes: 1 },
+  'Chin-ups': { back: 1, biceps: 1 },
+  'Tractions supination': { back: 1, biceps: 1 },
+  Fentes: { quads: 1, glutes: 1 },
+  'Presse unilatérale': { quads: 1, glutes: 1 },
+  Gainage: { core: 1 },
+  'Tractions neutres': { back: 1, biceps: 0.5 },
+  'Leg curl': { hamstrings: 1 },
+  Mollets: { calves: 1 },
+  'Curl biceps': { biceps: 1 },
+  'Extension triceps': { triceps: 1 },
+  // Maison
+  'Squat bulgare lesté (sac à dos)': { quads: 1, glutes: 1 },
+  'Squat bulgare (variante)': { quads: 1, glutes: 1 },
+  'Fentes bulgares lestées': { quads: 1, glutes: 1 },
+  'Dips chaise romaine': { chest: 1, triceps: 1 },
+  'Tractions large (chaise romaine)': { back: 1, biceps: 0.5 },
+  'Tractions supination (chaise romaine)': { back: 1, biceps: 1 },
+  'Tractions neutres (chaise romaine)': { back: 1, biceps: 0.5 },
+  'Rowing élastique': { back: 1, biceps: 0.5 },
+  'Élévations latérales élastique': { side_delts: 1 },
+  'Relevés de genoux (chaise romaine)': { core: 1 },
+  'RDL unilatéral lesté': { hamstrings: 1, glutes: 1 },
+  'Leg curl élastique': { hamstrings: 1 },
+  'Mollets unilatéraux sur marche (lestés)': { calves: 1 },
+  'Curl élastique': { biceps: 1 },
+  'Extension triceps élastique': { triceps: 1 },
+}
+
+// Séries dures / muscle / semaine : bornes pour le code couleur.
+export const VOLUME_ZONES = { low: 6, target: 10, high: 20 }
+
 export const LOCATIONS = {
   gym: { label: 'Salle', icon: '🏋️' },
   home: { label: 'Maison', icon: '🏠' },
@@ -81,6 +143,17 @@ export const LOCATIONS = {
 
 export const HOME_NOTE =
   'Mode maison : charge limitée (poids de corps, sac à dos, élastiques) → vise un RIR plus bas (0-1, 1-2 sur les gros mouvements) et des reps plus hautes (15-20+) pour garder un stimulus équivalent.'
+
+/** Créneau (salle ou maison) qui contient l'exercice `name`, pour retrouver son type de charge. */
+export function slotByName(name) {
+  for (const day of DAY_KEYS) {
+    for (const loc of ['gym', 'home']) {
+      const found = slotsFor(day, loc).find((slot) => slot.options.includes(name))
+      if (found) return found
+    }
+  }
+  return null
+}
 
 /** Créneaux d'un jour pour un lieu donné, normalisés (la variante maison hérite des champs absents). */
 export function slotsFor(day, location) {
